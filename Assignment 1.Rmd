@@ -112,9 +112,45 @@ train<-unnest_tokens(train_data, word, speech, token = 'words')
 
 
 ```{r Bag of words model}
-train_bag<- train%>% group_by(president_13, word) %>% 
+word_bag<- train%>% group_by(filename, president_13, word) %>% 
             summarise("count"=n())%>% filter(!word %in% stop_words$word)%>%
-            top_n(200, count)
+            top_n(200)%>% select(-count)
 
+
+tweets_tdf <- train %>%
+  inner_join(word_bag) %>%
+  group_by(filename, president_13,word) %>%
+  count() %>%  
+  group_by(president_13) %>%
+  mutate(total = sum(n)) %>%
+  ungroup()
+
+
+bag_of_words <- tweets_tdf %>% 
+  select(filename, president_13, word, n) %>% 
+  pivot_wider(names_from = word, values_from = n, values_fill = 0)%>%
+  select(-filename)%>%
+  mutate(president_13= as.factor(president_13))
+
+
+
+
+```
+
+
+```{r BOW with Classification trees}
+
+fit <- rpart(president_13 ~ ., bag_of_words, method = 'class')
+# options(repr.plot.width = 12, repr.plot.height = 10) # set plot size in the notebook
+plot(fit, main = 'Full Classification Tree')
+text(fit, use.n = TRUE, all = TRUE)
+```
+
+```{r}
+fittedtrain <- predict(fit, type = 'class')
+predtrain <- table(bag_of_words$president_13, fittedtrain)
+predtrain
+
+round(sum(diag(predtrain))/sum(predtrain), 3) # training accuracy
 ```
 
