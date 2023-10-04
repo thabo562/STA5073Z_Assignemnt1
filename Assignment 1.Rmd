@@ -45,9 +45,9 @@ sona<- sona%>% mutate(speech= str_replace_all(speech, "[[:punct:]]", ""))
 
 ```{r Data Visualisation}
 
-A<-unnest_tokens(sona, word, speech, token = 'words') 
+Sona_tokenized<-unnest_tokens(sona, word, speech, token = 'words') 
 
-Zuma<-A%>% group_by(president_13, word)%>% 
+Zuma<-Sona_tokenized%>% group_by(president_13, word)%>% 
         summarise("count"= n())%>% filter(president_13=="Zuma") %>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
@@ -55,7 +55,7 @@ Zuma<-A%>% group_by(president_13, word)%>%
         ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Words used')
 
 
-Mbeki<-A%>% group_by(president_13, word)%>% 
+Mbeki<-Sona_tokenized%>% group_by(president_13, word)%>% 
         summarise("count"= n())%>% filter(president_13=="Mbeki") %>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
@@ -64,14 +64,14 @@ Mbeki<-A%>% group_by(president_13, word)%>%
 
 
 
-Mandela<-A%>% group_by(president_13, word)%>% 
+Mandela<-Sona_tokenized%>% group_by(president_13, word)%>% 
         summarise("count"= n())%>% filter(president_13=="Mandela") %>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
         ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Words used')
 
-Ramaphosa<-A%>% group_by(president_13, word)%>% 
+Ramaphosa<-Sona_tokenized%>% group_by(president_13, word)%>% 
         summarise("count"= n())%>% filter(president_13=="Ramaphosa") %>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
@@ -101,23 +101,12 @@ train_data <- anti_join(sona, test_data, by = c("president_13", "filename"))
 ```
 
 
-
-```{r Tokenization}
-test<-unnest_tokens(test_data, word, speech, token = 'words')
-train<-unnest_tokens(train_data, word, speech, token = 'words')
-
-```
-
-
-
-
 ```{r Bag of words model}
-word_bag<- train%>% group_by(filename, president_13, word) %>% 
+word_bag<- Sona_tokenized%>% group_by(filename, president_13, word) %>% 
             summarise("count"=n())%>% filter(!word %in% stop_words$word)%>%
-            top_n(200)%>% select(-count)
+            top_n(200)
 
-
-tweets_tdf <- train %>%
+tweets_tdf<- Sona_tokenized %>%
   inner_join(word_bag) %>%
   group_by(filename, president_13,word) %>%
   count() %>%  
@@ -126,12 +115,15 @@ tweets_tdf <- train %>%
   ungroup()
 
 
+
 bag_of_words <- tweets_tdf %>% 
   select(filename, president_13, word, n) %>% 
   pivot_wider(names_from = word, values_from = n, values_fill = 0)%>%
-  select(-filename)%>%
   mutate(president_13= as.factor(president_13))
 
+
+test<-bag_of_words%>%semi_join(test_data, by= "filename")%>% select(-filename)
+train<-bag_of_words%>%semi_join(train_data, by= "filename")%>% select(-filename)
 
 
 
@@ -140,7 +132,7 @@ bag_of_words <- tweets_tdf %>%
 
 ```{r BOW with Classification trees}
 
-fit <- rpart(president_13 ~ ., bag_of_words, method = 'class')
+fit <- rpart(president_13 ~ ., train, method = 'class')
 # options(repr.plot.width = 12, repr.plot.height = 10) # set plot size in the notebook
 plot(fit, main = 'Full Classification Tree')
 text(fit, use.n = TRUE, all = TRUE)
@@ -148,9 +140,14 @@ text(fit, use.n = TRUE, all = TRUE)
 
 ```{r}
 fittedtrain <- predict(fit, type = 'class')
-predtrain <- table(bag_of_words$president_13, fittedtrain)
+predtrain <- table(train$president_13, fittedtrain)
 predtrain
 
 round(sum(diag(predtrain))/sum(predtrain), 3) # training accuracy
+
+fittedtest <- predict(fit, newdata = test, type = 'class')
+predtest <- table(test$president_13, fittedtest)
+predtest
+round(sum(diag(predtest))/sum(predtest), 3) # test accuracy
 ```
 
