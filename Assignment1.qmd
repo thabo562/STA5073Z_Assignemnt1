@@ -5,7 +5,7 @@ editor: visual
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 library(stringr)
 library(dplyr)
 library(tidyverse)
@@ -23,9 +23,11 @@ library(keras)
 library(tensorflow)
 #tf$constant("Hello world")
 
+
+
 ```
 
-##                                                Abstract
+# Abstract 
 
 Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
@@ -35,10 +37,65 @@ The aim of this paper is to identify different machine learning models that can 
 
 ## Exploratory Data analysis
 
-```{r, echo=FALSE}
+```{r Reading in Data}
 
-1+1
+set.seed(2022)
+load("F:/STA5073Z- DS4I/pre-processed assignment data.RData")
+#sona<-sona[-c(2,20),]  remove Motlante and De Klerk in this version of data split
+sona<-sona%>% mutate(speech= str_replace(speech, "\\d{1,2} [A-Za-z]+ \\d{4}", "")) # Remove dates at the start of the speech
+sona<- sona%>% mutate(speech= str_replace(speech, pattern = "^Thursday, ", replacement = ""))# remove dates on 2 remaining Ramaphosa speeches 
+sona<- sona%>% mutate(speech= str_trim(speech, side= "left"))
 
+Sona_S_tokenized<- unnest_tokens(sona, sentence, speech, token = 'sentences') 
+Sona_S_tokenized<- Sona_S_tokenized%>% mutate(sentence= str_replace_all(sentence, "[[:punct:]]", ""))
+
+
+```
+
+```{r}
+
+Sona_tokenized<-unnest_tokens(sona, word, speech, token = 'words') 
+
+Zuma<-Sona_tokenized%>% group_by(president_13, word)%>% 
+        summarise("count"= n())%>% filter(president_13=="Zuma") %>%
+        arrange(desc(count))%>%
+        filter(!word %in% stop_words$word) %>%
+        filter(rank(desc(count)) <= 20) %>%
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
+
+
+Mbeki<-Sona_tokenized%>% group_by(president_13, word)%>% 
+        summarise("count"= n())%>% filter(president_13=="Mbeki") %>%
+        arrange(desc(count))%>%
+        filter(!word %in% stop_words$word) %>%
+        filter(rank(desc(count)) <= 20) %>%
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
+
+
+
+Mandela<-Sona_tokenized%>% group_by(president_13, word)%>% 
+        summarise("count"= n())%>% filter(president_13=="Mandela") %>%
+        arrange(desc(count))%>%
+        filter(!word %in% stop_words$word) %>%
+        filter(rank(desc(count)) <= 20) %>%
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
+
+Ramaphosa<-Sona_tokenized%>% group_by(president_13, word)%>% 
+        summarise("count"= n())%>% filter(president_13=="Ramaphosa") %>%
+        arrange(desc(count))%>%
+        filter(!word %in% stop_words$word) %>%
+        filter(rank(desc(count)) <= 20) %>%
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
+
+#Top 20 words for each President
+
+par(mfrow = c(2,2))
+plot(Zuma)
+plot(Mbeki)
+plot(Mandela)
+plot(Ramaphosa)
+#plot(DeKlerk)
+#plot(Mothlante)
 ```
 
 ## Method
