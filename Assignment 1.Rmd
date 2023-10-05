@@ -34,16 +34,18 @@ tf$constant("Hello world")
 ```{r Reading in Data}
 set.seed(2022)
 load("F:/STA5073Z- DS4I/pre-processed assignment data.RData")
-sona<-sona[-c(2,20),] # remove Motlante and De Klerk in this version of data split
+#sona<-sona[-c(2,20),]  remove Motlante and De Klerk in this version of data split
 sona<-sona%>% mutate(speech= str_replace(speech, "\\d{1,2} [A-Za-z]+ \\d{4}", "")) # Remove dates at the start of the speech
 sona<- sona%>% mutate(speech= str_replace(speech, pattern = "^Thursday, ", replacement = ""))# remove dates on 2 remaining Ramaphosa speeches 
 sona<- sona%>% mutate(speech= str_trim(speech, side= "left"))
-sona<- sona%>% mutate(speech= str_replace_all(speech, "[[:punct:]]", ""))
+
+Sona_S_tokenized<- unnest_tokens(sona, sentence, speech, token = 'sentences') 
+Sona_S_tokenized<- Sona_S_tokenized%>% mutate(sentence= str_replace_all(sentence, "[[:punct:]]", ""))
 
 ```
 
 
-```{r Data Visualisation}
+```{r Word Visualisation}
 
 Sona_tokenized<-unnest_tokens(sona, word, speech, token = 'words') 
 
@@ -52,7 +54,7 @@ Zuma<-Sona_tokenized%>% group_by(president_13, word)%>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
-        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Words used')
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
 
 
 Mbeki<-Sona_tokenized%>% group_by(president_13, word)%>% 
@@ -60,7 +62,7 @@ Mbeki<-Sona_tokenized%>% group_by(president_13, word)%>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
-        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Words used')
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
 
 
 
@@ -69,14 +71,14 @@ Mandela<-Sona_tokenized%>% group_by(president_13, word)%>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
-        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Words used')
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
 
 Ramaphosa<-Sona_tokenized%>% group_by(president_13, word)%>% 
         summarise("count"= n())%>% filter(president_13=="Ramaphosa") %>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
-        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Words used')
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
 
 ```
 
@@ -87,8 +89,41 @@ plot(Zuma)
 plot(Mbeki)
 plot(Mandela)
 plot(Ramaphosa)
+plot(DeKlerk)
+plot(Mothlante)
 ```
 
+```{r No. of Sentences per president visualisation}
+# speech length
+avg_Speech_length<- Sona_S_tokenized %>% group_by(filename,president_13)%>%
+                      summarise("count"= n())%>%
+                      group_by(president_13)%>%
+                      summarise("Average" = as.integer(mean(count)))
+
+ggplot(avg_Speech_length, aes(y=as.factor(president_13), x= Average)) + 
+  geom_bar(stat = "identity") +
+   scale_fill_hue(c = 40)+
+  theme(legend.position="none") + 
+  labs(y=" President", x= "Average no. of sentence in speeches")
+
+
+```
+
+
+```{r No. of words per sentence }
+#sentence length
+
+avg_Sentence_length<- Sona_S_tokenized %>% group_by(filename,president_13)%>%
+                      summarise("sentence_length"=str_count(sentence, '\\w+'))%>%
+                      group_by(president_13)%>%
+                      summarise("Average" = as.integer(mean(sentence_length)))
+                   
+
+ggplot(avg_Sentence_length, aes(y=as.factor(president_13), x= Average)) + 
+  geom_bar(stat = "identity") +
+  theme(legend.position="none") + 
+  labs(y=" President", x= "Average no. of words in sentences")
+```
 
 
 ```{r Data Spliting}
@@ -102,11 +137,13 @@ train_data <- anti_join(sona, test_data, by = c("president_13", "filename"))
 
 
 ```{r Bag of words model}
-word_bag<- Sona_tokenized%>% group_by(filename, president_13, word) %>% 
+
+
+word_bag<- Sona_S_tokenized%>% group_by(filename, president_13, word) %>% 
             summarise("count"=n())%>% filter(!word %in% stop_words$word)%>%
             top_n(200)
 
-tweets_tdf<- Sona_tokenized %>%
+tweets_tdf<- Sona_S_tokenized %>%
   inner_join(word_bag) %>%
   group_by(filename, president_13,word) %>%
   count() %>%  
