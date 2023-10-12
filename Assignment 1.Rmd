@@ -62,7 +62,8 @@ Zuma<-Sona_tokenized%>% group_by(president_13, word)%>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
-        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')+
+   ggtitle("Zuma")+theme(plot.title = element_text(hjust=0.5))
 
 
 Mbeki<-Sona_tokenized%>% group_by(president_13, word)%>% 
@@ -70,7 +71,8 @@ Mbeki<-Sona_tokenized%>% group_by(president_13, word)%>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
-        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')+
+   ggtitle("Mbeki")+theme(plot.title = element_text(hjust=0.5))
 
 
 
@@ -79,14 +81,16 @@ Mandela<-Sona_tokenized%>% group_by(president_13, word)%>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
-        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')+
+   ggtitle("Mandela")+theme(plot.title = element_text(hjust=0.5))
 
 Ramaphosa<-Sona_tokenized%>% group_by(president_13, word)%>% 
         summarise("count"= n())%>% filter(president_13=="Ramaphosa") %>%
         arrange(desc(count))%>%
         filter(!word %in% stop_words$word) %>%
         filter(rank(desc(count)) <= 20) %>%
-        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')
+        ggplot(aes(x = reorder(word, count), y = count)) + geom_col() + coord_flip() + xlab('Top 20 words used')+
+   ggtitle("Ramaphosa")+theme(plot.title = element_text(hjust=0.5))
 
 ```
 
