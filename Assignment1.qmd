@@ -36,7 +36,7 @@ Quarto enables you to weave together content and executable code into a finished
 
 ## Introduction
 
-The aim of this paper is to identify different machine learning models that can be used for predictive purposes, and rank them according to their ability to do so. With presidential speech from 1994 to 2022 from South African presidents, this paper will review the capacity in which classification trees , neural networks and random forests are able to accurately classify sentences to their presidents. The input structuring process will also vary between bag of words and tf-idf so as to ascertain which one is more suitable for the data at hand with the particular machine learning model.
+The aim of this paper is to identify different machine learning models that can be used for predictive purposes, and rank them according to their ability to do so. With presidential speech from 1994 to 2022 from South African presidents, this paper will review the capacity in which classification trees , neural networks and random forests are able to accurately classify sentences to their presidents. The input structuring process will also vary between bag of words and tf-idf so as to ascertain which one is more suitable for the data at hand with a selected machine learning model.
 
 ## Exploratory Data analysis
 
@@ -113,7 +113,22 @@ grid.arrange(DeKlerk,Mandela,Mbeki,Motlanthe,Zuma,Ramaphosa, ncol=3,nrow=2)
 
 @fig-Words shows the most common words used by each president, outside of stop words that are common to all types of sentences construction. There is a visible tone change in the state of the nation addresses over time. With DeKlerk, a government centric tone is observed with high references to the constitution, parties and elections. The succeeding presidents put more emphasis on the betterment of the country, with Mandela and Mbeki speaking more on social welfare and Motlanthe, Zuma and Ramaphosa focusing on the country's economic development .
 
-## Method
+```{r}
+#| fig-cap: "Average Sentence Length"
+#| label: fig-sentences
+
+
+Sona_S_tokenized%>% group_by(president_13)%>% summarise("Avg_Sentences"= mean(n_words(sentence)))
+
+Sona_S_tokenized %>%
+  group_by(president_13) %>%
+  summarise(avg_sentence_length = mean(n()))
+
+
+
+```
+
+## Methods
 
 ### Input Methods
 
