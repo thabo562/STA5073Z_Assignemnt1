@@ -34,9 +34,11 @@ library(tensorflow)
 
 Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
+\*\*index words\*\* : Bag-of_words, Tf-IDF, Feed forward neural network (FFNN), random forest, classification tree
+
 ## Introduction
 
-The aim of this paper is to identify different machine learning models that can be used for predictive purposes, and rank them according to their ability to do so. With presidential speech from 1994 to 2022 from South African presidents, this paper will review the capacity in which classification trees , neural networks and random forests are able to accurately classify sentences to their presidents. The input structuring process will also vary between bag of words and tf-idf so as to ascertain which one is more suitable for the data at hand with a selected machine learning model.
+The aim of this paper is to identify different machine learning models that can be used for predictive purposes, and rank them according to their ability to do so. With presidential speech from 1994 to 2022 from South African presidents, this paper will review the capacity in which classification trees , feed forward neural networks and random forests are able to accurately classify sentences to their presidents. The input structuring process will also vary between bag of words and tf-idf so as to ascertain which one is more suitable for the data at hand with a selected machine learning model.
 
 ## Exploratory Data analysis
 
@@ -118,7 +120,7 @@ grid.arrange(DeKlerk,Mandela,Mbeki,Motlanthe,Zuma,Ramaphosa, ncol=3,nrow=2)
 #| label: fig-sentences
 
 
-Sona_S_tokenized%>% group_by(president_13)%>% summarise("Avg_Sentences"= mean(n_words(sentence)))
+
 
 Sona_S_tokenized %>%
   group_by(president_13) %>%
@@ -134,11 +136,11 @@ Sona_S_tokenized %>%
 
 #### Bag-of words
 
-In the domain of natural language processing, Bag-of-words is a tool which
+In the domain of natural language processing, Bag-of-words is a text modelling tool which allows users to discern between unnecessary information and keywords critical to the vocabulary of the model. The model
 
 ```{r}
 
-word_bag<- Sona_S_tokenized%>% group_by(filename, president_13, word) %>% 
+word_bag<- Sona_tokenized%>% group_by(filename, president_13, word) %>% 
             summarise("count"=n())%>% filter(!word %in% stop_words$word)%>%
             top_n(200)
 
@@ -180,3 +182,5 @@ train<-bag_of_words%>%semi_join(train_data, by= "filename")%>% select(-filename)
 ## Discussion
 
 ## Conclusion
+
+Potentially explore CNNs for even higher accuracy results
