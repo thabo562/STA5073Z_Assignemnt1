@@ -137,6 +137,7 @@ ggplot(avg_Sentence_length, aes(y=as.factor(president_13), x= Average)) +
   labs(y=" President", x= "Average no. of words in sentences")
 ```
 
+#Model Building
 
 ```{r Data Spliting}
 # Because there is an uneven number of speech made by each president, the test and training are sampled proportionally to each presidents total number of speeches

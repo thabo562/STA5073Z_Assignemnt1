@@ -134,6 +134,37 @@ Sona_S_tokenized %>%
 
 #### Bag-of words
 
+In the domain of natural language processing, Bag-of-words is a tool which
+
+```{r}
+
+word_bag<- Sona_S_tokenized%>% group_by(filename, president_13, word) %>% 
+            summarise("count"=n())%>% filter(!word %in% stop_words$word)%>%
+            top_n(200)
+
+tweets_tdf<- Sona_S_tokenized %>%
+  inner_join(word_bag) %>%
+  group_by(filename, president_13,word) %>%
+  count() %>%  
+  group_by(president_13) %>%
+  mutate(total = sum(n)) %>%
+  ungroup()
+
+
+
+bag_of_words <- tweets_tdf %>% 
+  select(filename, president_13, word, n) %>% 
+  pivot_wider(names_from = word, values_from = n, values_fill = 0)%>%
+  mutate(president_13= as.factor(president_13))
+
+
+test<-bag_of_words%>%semi_join(test_data, by= "filename")%>% select(-filename)
+train<-bag_of_words%>%semi_join(train_data, by= "filename")%>% select(-filename)
+
+
+
+```
+
 #### Td-idf
 
 ### Predictive Models
