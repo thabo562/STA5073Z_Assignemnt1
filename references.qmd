@@ -9,3 +9,5 @@ editor: visual
 -   Pillai, V.G. and Chandran, L.R., 2020, August. Verdict prediction for indian courts using bag of words and convolutional neural network. In *2020 Third International Conference on Smart Systems and Inventive Technology (ICSSIT)* (pp. 676-683). IEEE.
 
 -   Irie, K., Schlüter, R. and Ney, H., 2015. Bag-of-words input for long history representation in neural network-based language models for speech recognition. In *Sixteenth Annual Conference of the International Speech Communication Association*.
+
+-   Qader, W.A., Ameen, M.M. and Ahmed, B.I., 2019, June. An overview of bag of words; importance, implementation, applications, and challenges. In *2019 international engineering conference (IEC)* (pp. 200-204). IEEE.
