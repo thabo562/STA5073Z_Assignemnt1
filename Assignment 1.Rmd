@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = FALSE)
 library(stringr)
 library(dplyr)
 library(tidyverse)
+library(rpart)
 library(ggplot2)
 
 install.packages("tidytext")

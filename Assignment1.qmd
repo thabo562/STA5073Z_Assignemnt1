@@ -11,6 +11,7 @@ knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
 library(stringr)
 library(dplyr)
 library(tidyverse)
+library(rpart)
 library(gridExtra)
 library(ggplot2)
 
@@ -25,9 +26,6 @@ library(tidytext)
 library(keras)
 library(tensorflow)
 #tf$constant("Hello world")
-
-
-
 ```
 
 # Abstract
@@ -137,13 +135,19 @@ Notably, BoW has found applications in diverse contexts, such as a study in Indi
 
 ```{r Word-bag}
 
-word_bag<- Sona_tokenized%>% group_by(filename, president_13, word) %>% 
+identifiers<- 1:nrow(Sona_S_tokenized)
+Sona_S_tokenized$Sent_ID=identifiers
+
+word_bag<- Sona_S_tokenized%>% 
+            unnest_tokens(input = sentence, output = word, token = 'words') %>%
+            group_by(Sent_ID, president_13, word) %>% 
             summarise("count"=n())%>% filter(!word %in% stop_words$word)%>%
             top_n(200)
 
-tweets_tdf<- Sona_tokenized %>%
+tweets_tdf<- Sona_S_tokenized %>%
+  unnest_tokens(input = sentence, output = word, token = 'words') %>%
   inner_join(word_bag) %>%
-  group_by(filename, president_13,word) %>%
+  group_by(Sent_ID, president_13,word) %>%
   count() %>%  
   group_by(president_13) %>%
   mutate(total = sum(n)) %>%
@@ -152,7 +156,7 @@ tweets_tdf<- Sona_tokenized %>%
 
 
 bag_of_words <- tweets_tdf %>% 
-  select(filename, president_13, word, n) %>% 
+  select(Sent_ID, president_13, word, n) %>% 
   pivot_wider(names_from = word, values_from = n, values_fill = 0)%>%
   mutate(president_13= as.factor(president_13))
 
@@ -167,7 +171,7 @@ knitr::kable(bag_of_words[1:3,c(1,2,5:10)])
 ```
 
 |            filename             | president | abroad | abuse | accept | achieve | acting |
-|:-----------------:|:-------:|---------|---------|---------|---------|---------|
+|:---------:|:---------:|-----------|-----------|-----------|-----------|-----------|
 | 1994_post_elections_Mandela.txt |  Mandela  | 3      | 2     | 2      | 4       | 2      |
 | 1994_pre_elections_deKlerk.txt  |  deKlerk  | 0      | 1     | 1      | 2       | 0      |
 
@@ -178,6 +182,33 @@ knitr::kable(bag_of_words[1:3,c(1,2,5:10)])
 ### Predictive Models
 
 #### Classification Trees
+
+```{r}
+
+test_data <- Sona_S_tokenized %>% group_by(president_13) %>% slice_sample(prop = 0.3) %>% ungroup()
+train_data <- anti_join(Sona_S_tokenized, test_data, by = c("president_13", "Sent_ID"))
+
+test<-bag_of_words%>%semi_join(test_data, by= "Sent_ID")%>% select(-Sent_ID)
+train<-bag_of_words%>%semi_join(train_data, by= "Sent_ID")%>% select(-Sent_ID)
+
+fit <- rpart(president_13 ~ ., train, method = 'class')
+options(repr.plot.width = 12, repr.plot.height = 10) # set plot size in the notebook
+plot(fit, main = 'Classification Tree')
+text(fit, use.n = TRUE, all = TRUE, cex=.8)
+
+fittedtrain <- predict(fit, type = 'class')
+predtrain <- table(train$president_13, fittedtrain)
+knitr:: kable(predtrain)
+
+#round(sum(diag(predtrain))/sum(predtrain), 3)  training accuracy
+
+fittedtest <- predict(fit, newdata = test, type = 'class')
+predtest <- table(test$president_13, fittedtest)
+knitr::kable(predtest)
+#round(sum(diag(predtest))/sum(predtest), 3)  test accuracy
+
+
+```
 
 #### Random Forest
 
