@@ -15,6 +15,9 @@ library(tidyverse)
 library(rpart)
 library(ggplot2)
 
+install.packages("randomForest")
+library(randomForest)
+
 install.packages("tidytext")
 library(tidytext)
 
@@ -200,5 +203,32 @@ fittedtest <- predict(fit, newdata = test, type = 'class')
 predtest <- table(test$president_13, fittedtest)
 predtest
 round(sum(diag(predtest))/sum(predtest), 3) # test accuracy
+```
+
+```{r BOW Random Forest}
+
+install.packages("randomForest")
+library(randomForest)
+train<- as.data.frame(train)
+classifier_RF = randomForest(x = train[,-1], 
+                             y = train[,1], 
+                             ntree = 20) 
+  
+classifier_RF #view the output of the random forest
+
+test<- as.data.frame(test)
+y_pred = predict(classifier_RF, newdata = test[,-1]) 
+  
+# Confusion Matrix 
+confusion_mtx = table(test[,1], y_pred) 
+confusion_mtx 
+round(sum(diag(confusion_mtx))/sum(confusion_mtx), 3) # test accuracy
+
+# Plotting model 
+plot(classifier_RF) 
+  
+
+# Variable importance plot 
+varImpPlot(classifier_RF) 
 ```
 
