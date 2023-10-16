@@ -231,7 +231,7 @@ The recorded classification rate of this model was 30% meaning the model The mod
 
 
 train<- as.data.frame(train)
-classifier_RF = randomForest(x = train[,-1], 
+#classifier_RF = randomForest(x = train[,-1], 
                              y = train[,1], 
                              ntree = 20) 
   
