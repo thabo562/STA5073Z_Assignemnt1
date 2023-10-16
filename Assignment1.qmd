@@ -23,7 +23,7 @@ library(tidytext)
 #update r and install git
 #install.packages("remotes")
 #remotes::install_github(sprintf("rstudio/%s",
-                        #c("reticulate", "tensorflow", "keras")))
+#                        c("reticulate", "tensorflow","keras")))
 #keras:: install_keras()
 library(keras)
 library(tensorflow)
@@ -46,6 +46,7 @@ The aim of this paper is to identify different machine learning models that can 
 
 set.seed(2022)
 load("F:/STA5073Z- DS4I/pre-processed assignment data.RData")
+load("~/STA5073Z_Assignemnt1/Assignement code workspace.RData")
 #sona<-sona[-c(2,20),]  remove Motlante and De Klerk in this version of data split
 sona<-sona%>% mutate(speech= str_replace(speech, "\\d{1,2} [A-Za-z]+ \\d{4}", "")) # Remove dates at the start of the speech
 sona<- sona%>% mutate(speech= str_replace(speech, pattern = "^Thursday, ", replacement = ""))# remove dates on 2 remaining Ramaphosa speeches 
@@ -140,11 +141,11 @@ Notably, BoW has found applications in diverse contexts, such as a study in Indi
 identifiers<- 1:nrow(Sona_S_tokenized)
 Sona_S_tokenized$Sent_ID=identifiers
 
-word_bag<- Sona_S_tokenized%>% 
-            unnest_tokens(input = sentence, output = word, token = 'words') %>%
-            group_by(Sent_ID, president_13, word) %>% 
-            summarise("count"=n())%>% filter(!word %in% stop_words$word)%>%
-            top_n(200)
+#word_bag<- Sona_S_tokenized%>% 
+            #unnest_tokens(input = sentence, output = word, token = 'words') %>%
+           # group_by(Sent_ID, president_13, word) %>% 
+            #summarise("count"=n())%>% filter(!word %in% stop_words$word)%>%
+            #top_n(200)
 
 tweets_tdf<- Sona_S_tokenized %>%
   unnest_tokens(input = sentence, output = word, token = 'words') %>%
@@ -171,13 +172,6 @@ knitr::kable(bag_of_words[1:3,c(1,2,5:10)])
 #train<-bag_of_words%>%semi_join(train_data, by= "filename")%>% select(-filename)
 
 ```
-
-|            filename             | president | abroad | abuse | accept | achieve | acting |
-|:---------:|:---------:|-----------|-----------|-----------|-----------|-----------|
-| 1994_post_elections_Mandela.txt |  Mandela  | 3      | 2     | 2      | 4       | 2      |
-| 1994_pre_elections_deKlerk.txt  |  deKlerk  | 0      | 1     | 1      | 2       | 0      |
-
-: Snippet of Bag-of-Words model
 
 #### Tf-Idf
 
@@ -227,31 +221,47 @@ The recorded classification rate of this model was 30% meaning the model The mod
 
 #### Random Forest
 
-```{r BOW_RF}
+Random Forest revolves around an ensemble of decision trees reinforced by bagging. Bagging, short for Bootstrap Aggregating, reduces variance and adds stability to these decision trees. It begins by creating multiple subsets of the training data, each of equal size to the original dataset, formed by random selection with potential repetition. These bootstrapped subsets are then used to independently build individual decision trees, each providing a unique perspective on the text data. Once the trees are constructed, they collectively contribute to the final prediction through a majority vote. This aggregation enhances robustness and accuracy, particularly beneficial for text data.
 
+Additionally, Random Forest introduces random feature selection, where only a subset of features is considered at each node during tree construction, helping to reduce correlation between the trees and avoid overfitting, which is a common challenge when dealing with high-dimensional text data. Additionally, it offers the capability to assess variable importance by considering the random feature selection, providing insights into the crucial elements determining the president which said the given sentence. The figure below shows the error rate of the random forest as the number of trees increase.
+
+```{r RF_BOW}
+
+load("~/STA5073Z_Assignemnt1/Assignement code workspace.RData")
 
 train<- as.data.frame(train)
-#classifier_RF = randomForest(x = train[,-1], 
-                             y = train[,1], 
-                             ntree = 20) 
+#classifier_RF = randomForest(x = train[,-1], y = train[,1],ntree = 20) # commented out becuase html file takes too lon to render the document
   
-classifier_RF #view the output of the random forest
+plot(classifier_RF$err.rate[,1], xlab="Trees", ylab="Error rate", type="l") #view the output of the random forest
 
+#| fig-cap: "BoW Random forest error rate"
+#| label: fig-RF_BOW
+
+```
+
+as
+
+```{r}
+knitr:: kable(classifier_RF$confusion)
 test<- as.data.frame(test)
 y_pred = predict(classifier_RF, newdata = test[,-1]) 
   
 # Confusion Matrix 
 confusion_mtx = table(test[,1], y_pred) 
-confusion_mtx 
-round(sum(diag(confusion_mtx))/sum(confusion_mtx), 3) # test accuracy
+#confusion_mtx 
+#round(sum(diag(confusion_mtx))/sum(confusion_mtx), 3) # test accuracy
+```
 
-# Plotting model 
-plot(classifier_RF) 
-  
+For the presidents with fewer speeches in the dataset, such as deKlerk and Motlanthe, the error rates are notably high, with deKlerk reaching an error rate of 85.1% and Motlanthe experiencing a much more substantial error rate of 99.5%. Interestingly, this analysis reveals recurring patterns where a significant portion of deKlerk's speeches are misclassified as Zuma, and Motlanthe's speeches are predominantly classified as Mbeki.
 
+On the other hand, for more prolific presidents like Mbeki and Zuma, the error rates are comparatively lower, with Mbeki achieving an error rate of 47.1% and Zuma having an error rate of 41.4%. However, it's worth noting that the error rate for Zuma's speeches has seen a notable increase in comparison to previous models, while Mbeki's error rate has seen a significant decrease. These observations shed light on the model's performance in handling classes with imbalanced data, indicating potential areas for improvement in correctly classifying the speeches of less frequently represented presidents.
+
+```{r}
 # Variable importance plot 
 varImpPlot(classifier_RF) 
 ```
+
+"\@fig-RF_VarImp," shows the top 30 most important features, each possessing a mean decrease Gini score exceeding 5. This score reflects the feature's contribution to the reduction of Gini impurity, with higher scores indicating greater importance in the model's predictive capability. The analysis has identified the two most influential words as 'compariots' and 'regard,' both exhibiting mean decrease Gini scores exceeding 30. Following ,with a score of almost half, are 'rand' and 'capture' with mean deacrease gini scores just below 15.
 
 #### Neural Networks
 

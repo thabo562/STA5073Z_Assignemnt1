@@ -212,7 +212,7 @@ library(randomForest)
 train<- as.data.frame(train)
 classifier_RF = randomForest(x = train[,-1], 
                              y = train[,1], 
-                             ntree = 20) 
+                             ntree = 100) 
   
 classifier_RF #view the output of the random forest
 
