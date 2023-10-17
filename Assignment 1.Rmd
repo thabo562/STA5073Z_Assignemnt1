@@ -232,3 +232,36 @@ plot(classifier_RF)
 varImpPlot(classifier_RF) 
 ```
 
+
+```{r TF-IDF}
+
+speeches_tokens <- Sona_tokenized %>%
+  count(president_13, word,filename, sort = TRUE)
+ 
+speeches_document_frequencies <- speeches_tokens %>%
+  group_by(word) %>%
+  summarize(document_frequency = n_distinct(filename))
+
+speeches_tf_idf <- speeches_tokens %>%
+  left_join(speeches_document_frequencies, by = "word") %>%
+  mutate(tf_idf = n * (log2(n_distinct(president_13) / document_frequency)))
+
+
+```
+
+
+
+```{r}
+tfidf <- speeches_tf_idf %>% 
+  select(Sent_ID,president_13, word, tf_idf) %>%  # note the change, using tf-idf
+  pivot_wider(names_from = word, values_from = tf_idf, values_fill = 0)%>%
+  mutate(president_13= as.factor(president_13))
+
+```
+
+
+
+
+
+
+

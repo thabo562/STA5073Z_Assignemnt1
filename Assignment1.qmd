@@ -7,7 +7,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, warning = FALSE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(stringr)
 library(dplyr)
 library(tidyverse)
@@ -25,8 +25,8 @@ library(tidytext)
 #remotes::install_github(sprintf("rstudio/%s",
 #                        c("reticulate", "tensorflow","keras")))
 #keras:: install_keras()
-library(keras)
-library(tensorflow)
+#library(keras)
+#library(tensorflow)
 #tf$constant("Hello world")
 ```
 
@@ -38,7 +38,7 @@ Quarto enables you to weave together content and executable code into a finished
 
 ## Introduction
 
-The aim of this paper is to identify different machine learning models that can be used for predictive purposes, and rank them according to their ability to do so. With presidential speech from 1994 to 2022 from South African presidents, this paper will review the capacity in which classification trees , feed forward neural networks and random forests are able to accurately classify sentences to their presidents. The input structuring process will also vary between bag of words and tf-idf so as to ascertain which one is more suitable for the data at hand with a selected machine learning model.
+The aim of this paper is to identify different machine learning models that can be used for predictive purposes, and rank them according to their ability to do so. With presidential speech from 1994 to 2022 from South African presidents, this paper will review the capacity in which classification trees , feed forward neural networks and random forests are able to accurately classify sentences to their presidents. The input structuring process will also vary between bag of words and TF-IDF so as to ascertain which one is more suitable for the data at hand with a selected machine learning model.
 
 ## Exploratory Data analysis
 
@@ -183,6 +183,28 @@ Term Frequency- Inverse Document Frequency (TF_IDF) is another input method used
 
 There have been studies conducted using both BoW and TF-IDF which found that TF-IDF generally out performed BoW when combined with ML models,  however this will not always be the cases because there are countless ML algorithms that exist and each one has a particular method that will allow for the best fit with a given dataset. For example, a study conducted to identify hate speech in tweets found that TF_IDF performed best with Decision trees while BoW performed best with logistic regression, each method obtaining relatively high accuracies. (Akuma et al., 2022)
 
+```{r}
+speeches_tokens <- Sona_S_tokenized %>% 
+  unnest_tokens(input = sentence, output = word, token = 'words')%>%
+  count(president_13, word,filename,Sent_ID ,sort = TRUE)
+
+speeches_document_frequencies <- speeches_tokens %>%
+  group_by(word) %>%
+  summarize(document_frequency = n_distinct(filename))
+
+speeches_tf_idf <- speeches_tokens %>%
+  left_join(speeches_document_frequencies, by = "word") %>%
+  mutate(tf_idf = n * (log2(n_distinct(president_13) / document_frequency)))
+
+
+tfidf <- speeches_tf_idf %>% 
+  select(Sent_ID,president_13, word, tf_idf) %>%  # note the change, using tf-idf
+  pivot_wider(names_from = word, values_from = tf_idf, values_fill = 0)%>%
+  mutate(president_13= as.factor(president_13))
+
+
+```
+
 ### Predictive Models & Results
 
 #### Classification Trees
@@ -195,11 +217,13 @@ train_data <- anti_join(Sona_S_tokenized, test_data, by = c("president_13", "Sen
 test<-bag_of_words%>%semi_join(test_data, by= "Sent_ID")%>% select(-Sent_ID)
 train<-bag_of_words%>%semi_join(train_data, by= "Sent_ID")%>% select(-Sent_ID)
 
-fit <- rpart(president_13 ~ ., train, method = 'class')
+#fit <- rpart(president_13 ~ ., train, method = 'class')
 options(repr.plot.width = 12, repr.plot.height = 10) # set plot size in the notebook
-plot(fit, main = 'Classification Tree')
-text(fit, use.n = TRUE, all = TRUE, cex=.8)
-
+plot(fit, main = 'Classification Tree',margin = 0.015)
+text(fit, use.n = TRUE, all = FALSE, cex=.8)
+#| fig-cap: "BOW Classification Tree"
+#| label: fig-CT_BOW
+#| 
 fittedtrain <- predict(fit, type = 'class')
 predtrain <- table(train$president_13, fittedtrain)
 #knitr:: kable(predtrain)
@@ -207,9 +231,9 @@ predtrain <- table(train$president_13, fittedtrain)
 
 ```
 
-Figure \[\] shows a classification tree when text is modelled by BoW. The tree does not have a lot of branches which is indicative of poor classification. The only two presidents can be classified are Mbeki and Zuma , which means every sentence put into the model will return either one of those presidents which is not true. The following table shows the classification using the test dataset:
+@fig-CT_BOW shows a classification tree when text is modelled by BoW. The tree does not have a lot of branches which is indicative of poor classification. The only two presidents can be classified are Mbeki and Zuma , which means every sentence put into the model will return either one of those presidents which is not true. The following table shows the classification using the test dataset:
 
-```{r CT test set}
+```{r CT_BOW test set}
 fittedtest <- predict(fit, newdata = test, type = 'class')
 predtest <- table(test$president_13, fittedtest)
 knitr::kable(predtest)
@@ -218,6 +242,35 @@ knitr::kable(predtest)
 ```
 
 The recorded classification rate of this model was 30% meaning the model The model is performing better than random guessing but still has significant room for improvement. The possible reasons for this low classification are unclear as it could be attributed to the model's performance itself or underlying issues with the data. As previously mentioned in the data analysis, the number of speeches each president makes is different with some making one and others making more than 5, causing a high degree of class imbalance.
+
+```{r CT_TF-IDF}
+
+test2<-tfidf%>%semi_join(test_data, by= "Sent_ID")%>% select(-Sent_ID)
+train2<-tfidf%>%semi_join(train_data, by= "Sent_ID")%>% select(-Sent_ID)
+
+fit2 <- rpart(president_13 ~ ., train2, method = 'class')
+options(repr.plot.width = 12, repr.plot.height = 10) # set plot size in the notebook
+plot(fit2, main = 'Classification Tree', margin = 0.015)
+text(fit2, use.n = FALSE, all = FALSE, cex=.7)
+
+fittedtrain2 <- predict(fit2, type = 'class')
+predtrain2 <- table(train2$president_13, fittedtrain2)
+#round(sum(diag(predtrain2))/sum(predtrain2), 3)  #training accuracy
+#| fig-cap: "TF-IDF Classification Tree"
+#| label: fig-CT_TF-IDF
+
+
+```
+
+```{r CT_TF-IDF test set}
+fittedtest2 <- predict(fit2, newdata = test2, type = 'class')
+predtest2 <- table(test2$president_13, fittedtest2)
+knitr::kable(predtest2)
+#round(sum(diag(predtest2))/sum(predtest2), 3)  test accuracy
+
+```
+
+The classification rate achieved using the TF-IDF tool stands at 37.8%, demonstrating a slight improvement compared to the performance of the bag of words method, which doesn't take into account the associated word weights. The table above shows how the observations are still only distributed between Mbeki and Zuma but this time the classification of the observations is more equalled distributed between the two. Nevertheless, this accuracy rate remains notably low, suggesting that a basic classification tree might not be the most effective predictive model for the speech text data under investigation. Consequently, the next model to be explored will build upon the foundation of these basic classification trees, aiming to enhance predictive performance and capture the underlying complexities of the text data.
 
 #### Random Forest
 
@@ -259,9 +312,31 @@ On the other hand, for more prolific presidents like Mbeki and Zuma, the error r
 ```{r}
 # Variable importance plot 
 varImpPlot(classifier_RF) 
+#| fig-cap: "RF Variable Importance"
+#| label: fig-RF_VarImp
 ```
 
-"\@fig-RF_VarImp," shows the top 30 most important features, each possessing a mean decrease Gini score exceeding 5. This score reflects the feature's contribution to the reduction of Gini impurity, with higher scores indicating greater importance in the model's predictive capability. The analysis has identified the two most influential words as 'compariots' and 'regard,' both exhibiting mean decrease Gini scores exceeding 30. Following ,with a score of almost half, are 'rand' and 'capture' with mean deacrease gini scores just below 15.
+\@fig-RF_VarImp shows the top 30 most important features, each possessing a mean decrease Gini score exceeding 5. This score reflects the feature's contribution to the reduction of Gini impurity, with higher scores indicating greater importance in the model's predictive capability. The analysis has identified the two most influential words as 'compatriots' and 'regard,' both exhibiting mean decrease Gini scores exceeding 30. Following ,with a score of almost half, are 'rand' and 'capture' with mean deacrease gini scores just below 15.
+
+```{r}
+train2<- as.data.frame(train)
+#classifier_RF2 = randomForest(x = train2[,-1], y = train2[,1],ntree = 20) # commented out becuase html file takes too lon to render the document
+  
+plot(classifier_RF2$err.rate[,1], xlab="Trees", ylab="Error rate", type="l") #view the output of the random forest
+
+#| fig-cap: "BoW Random forest error rate"
+#| label: fig-RF_BOW
+
+```
+
+```{r}
+# Variable importance plot 
+varImpPlot(classifier_RF2) 
+#| fig-cap: "RF Variable Importance"
+#| label: fig-RF_VarImp_IDF
+```
+
+@fig-RF_VarImp_IDF
 
 #### Neural Networks
 
