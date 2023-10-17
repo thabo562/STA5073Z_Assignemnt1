@@ -355,9 +355,7 @@ varImpPlot(classifier_RF2,main = "Variable Importance with TF-IDF" )
 #| label: fig-RF_VarImp_IDF
 ```
 
-@fig-RF_VarImp_IDF
-
-#### Neural Networks
+#### Feed Forward Neural Network(FFNN)
 
 ## Discussion
 

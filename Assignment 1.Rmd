@@ -259,6 +259,37 @@ tfidf <- speeches_tf_idf %>%
 
 ```
 
+```{r}
+model <- keras_model_sequential()
+
+model %>% 
+    layer_dense(units = 8, activation = 'relu', input_shape = c(12235)) %>% 
+    layer_dropout(rate = 0.5) %>%
+    layer_dense(units = 6, activation = 'softmax')
+
+model %>% compile(
+  loss = 'categorical_crossentropy',
+  optimizer = optimizer_adam(learning_rate = 0.01),
+  metrics = c('accuracy'),
+)
+
+target1 <- as.integer(factor(train2$president_13)) - 1
+target2<-as.integer(factor(test2$president_13)) - 1
+
+y_train <- to_categorical(target1)
+y_test_original <- target2
+y_test <- to_categorical(target2)
+
+history <- model %>% fit(
+  train2[,-1], y_train, 
+  epochs = 30, batch_size = 5, 
+  validation_split = 0.2, shuffle = TRUE
+)
+
+plot(history)
+
+
+```
 
 
 
