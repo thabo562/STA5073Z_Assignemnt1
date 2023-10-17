@@ -25,14 +25,12 @@ library(tidytext)
 #remotes::install_github(sprintf("rstudio/%s",
 #                        c("reticulate", "tensorflow","keras")))
 #keras:: install_keras()
-#library(keras)
-#library(tensorflow)
+library(keras)
+library(tensorflow)
 #tf$constant("Hello world")
 ```
 
-# Abstract
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+## Abstract
 
 \*\*index words\*\* : Bag-of_words, Tf-IDF, Feed forward neural network (FFNN), random forest, classification tree
 
@@ -209,7 +207,7 @@ tfidf <- speeches_tf_idf %>%
 
 #### Classification Trees
 
-```{r}
+```{r, fig.cap="BOW Classification Tree"}
 
 test_data <- Sona_S_tokenized %>% group_by(president_13) %>% slice_sample(prop = 0.3) %>% ungroup()
 train_data <- anti_join(Sona_S_tokenized, test_data, by = c("president_13", "Sent_ID"))
@@ -217,25 +215,29 @@ train_data <- anti_join(Sona_S_tokenized, test_data, by = c("president_13", "Sen
 test<-bag_of_words%>%semi_join(test_data, by= "Sent_ID")%>% select(-Sent_ID)
 train<-bag_of_words%>%semi_join(train_data, by= "Sent_ID")%>% select(-Sent_ID)
 
+test<- as.data.frame(test)
+train<- as.data.frame(train)
+
 #fit <- rpart(president_13 ~ ., train, method = 'class')
 options(repr.plot.width = 12, repr.plot.height = 10) # set plot size in the notebook
 plot(fit, main = 'Classification Tree',margin = 0.015)
 text(fit, use.n = TRUE, all = FALSE, cex=.8)
 #| fig-cap: "BOW Classification Tree"
 #| label: fig-CT_BOW
-#| 
 fittedtrain <- predict(fit, type = 'class')
-predtrain <- table(train$president_13, fittedtrain)
+#predtrain <- table(train$president_13, fittedtrain)
+
+
 #knitr:: kable(predtrain)
 #round(sum(diag(predtrain))/sum(predtrain), 3)  training accuracy
 
 ```
 
-@fig-CT_BOW shows a classification tree when text is modelled by BoW. The tree does not have a lot of branches which is indicative of poor classification. The only two presidents can be classified are Mbeki and Zuma , which means every sentence put into the model will return either one of those presidents which is not true. The following table shows the classification using the test dataset:
+@fig-CT_BOW [fig-CT_BOW] shows a classification tree when text is modelled by BoW. The tree does not have a lot of branches which is indicative of poor classification. The only two presidents can be classified are Mbeki and Zuma , which means every sentence put into the model will return either one of those presidents which is not true. The following table shows the classification using the test dataset:
 
 ```{r CT_BOW test set}
-fittedtest <- predict(fit, newdata = test, type = 'class')
-predtest <- table(test$president_13, fittedtest)
+#fittedtest <- predict(fit, newdata = test, type = 'class')
+#predtest <- table(test$president_13, fittedtest)
 knitr::kable(predtest)
 #round(sum(diag(predtest))/sum(predtest), 3)  test accuracy
 
@@ -248,7 +250,10 @@ The recorded classification rate of this model was 30% meaning the model The mod
 test2<-tfidf%>%semi_join(test_data, by= "Sent_ID")%>% select(-Sent_ID)
 train2<-tfidf%>%semi_join(train_data, by= "Sent_ID")%>% select(-Sent_ID)
 
-fit2 <- rpart(president_13 ~ ., train2, method = 'class')
+test2<- as.data.frame(test2)
+train2<-as.data.frame(train2)
+
+#fit2 <- rpart(president_13 ~ ., train2, method = 'class')
 options(repr.plot.width = 12, repr.plot.height = 10) # set plot size in the notebook
 plot(fit2, main = 'Classification Tree', margin = 0.015)
 text(fit2, use.n = FALSE, all = FALSE, cex=.7)
@@ -270,7 +275,7 @@ knitr::kable(predtest2)
 
 ```
 
-The classification rate achieved using the TF-IDF tool stands at 37.8%, demonstrating a slight improvement compared to the performance of the bag of words method, which doesn't take into account the associated word weights. The table above shows how the observations are still only distributed between Mbeki and Zuma but this time the classification of the observations is more equalled distributed between the two. Nevertheless, this accuracy rate remains notably low, suggesting that a basic classification tree might not be the most effective predictive model for the speech text data under investigation. Consequently, the next model to be explored will build upon the foundation of these basic classification trees, aiming to enhance predictive performance and capture the underlying complexities of the text data.
+The classification rate achieved using the TF-IDF tool stands at 37.8%, demonstrating a slight improvement compared to the performance of the bag of words method, which doesn't take into account the associated word weights. The table above shows how the observations are still only distributed between Mbeki and Zuma but this time the classification of the observations is more equally distributed between the two. Nevertheless, this accuracy rate remains notably low, suggesting that a basic classification tree might not be the most effective predictive model for the speech text data under investigation. Consequently, the next model to be explored will build upon the foundation of these basic classification trees, aiming to enhance predictive performance and capture the underlying complexities of the text data.
 
 #### Random Forest
 
@@ -292,7 +297,7 @@ plot(classifier_RF$err.rate[,1], xlab="Trees", ylab="Error rate", type="l") #vie
 
 ```
 
-as
+As the number of trees in the model increases, it acquires a deeper understanding of the data, leading to a reduction in the error rate. Beginning with an initial error rate of 60%, by the 20th tree, the model shows improvement, successfully decreasing the error rate by 10%. This method is computationally expensive and so only 20 trees were considered. At this point it is unclear whether an increase in the number of trees will improve the accuracy of the test or lead to diminishing returns. All that can be said is that the error rate is better than that of the previous model.
 
 ```{r}
 knitr:: kable(classifier_RF$confusion)
@@ -311,16 +316,16 @@ On the other hand, for more prolific presidents like Mbeki and Zuma, the error r
 
 ```{r}
 # Variable importance plot 
-varImpPlot(classifier_RF) 
+varImpPlot(classifier_RF,main = "Variable Importance with BoW" ) 
 #| fig-cap: "RF Variable Importance"
 #| label: fig-RF_VarImp
 ```
 
-\@fig-RF_VarImp shows the top 30 most important features, each possessing a mean decrease Gini score exceeding 5. This score reflects the feature's contribution to the reduction of Gini impurity, with higher scores indicating greater importance in the model's predictive capability. The analysis has identified the two most influential words as 'compatriots' and 'regard,' both exhibiting mean decrease Gini scores exceeding 30. Following ,with a score of almost half, are 'rand' and 'capture' with mean deacrease gini scores just below 15.
+@fig-RF_VarImp shows the top 30 most important features, each possessing a mean decrease Gini score exceeding 5. This score reflects the feature's contribution to the reduction of Gini impurity, with higher scores indicating greater importance in the model's predictive capability. The analysis has identified the two most influential words as 'compatriots' and 'regard,' both exhibiting mean decrease Gini scores exceeding 30. Following ,with a score of almost half, are 'rand' and 'capture' with mean decrease Gini scores just below 15. The same modelling is conducted on the TF-IDF data and the results were as follows:
 
 ```{r}
-train2<- as.data.frame(train)
-#classifier_RF2 = randomForest(x = train2[,-1], y = train2[,1],ntree = 20) # commented out becuase html file takes too lon to render the document
+train2<- as.data.frame(train2)
+classifier_RF2 = randomForest(x = train2[,-1], y = train2[,1],ntree = 20) # commented out becuase html file takes too lon to render the document
   
 plot(classifier_RF2$err.rate[,1], xlab="Trees", ylab="Error rate", type="l") #view the output of the random forest
 
@@ -329,9 +334,23 @@ plot(classifier_RF2$err.rate[,1], xlab="Trees", ylab="Error rate", type="l") #vi
 
 ```
 
+The gradual decrease in error rate is almost identical to the bag of words model starting at about 60% and falling to 52% after 20 trees. This similarity may suggest that, at least up to this point, the additional complexity brought by the ensemble learning technique (as represented by the number of trees) yields a consistent and comparable improvement in predictive accuracy for both the BoW model and TF-IDF.
+
+```{r}
+knitr:: kable(classifier_RF2$confusion)
+y_pred2 = predict(classifier_RF2, newdata = test2[,-1]) 
+  
+# Confusion Matrix 
+confusion_mtx2 = table(test2[,1], y_pred2) 
+confusion_mtx2 
+round(sum(diag(confusion_mtx2))/sum(confusion_mtx2), 3) # test accuracy
+```
+
+The depicted figure presents class errors in the TD-IDF model for each president. In comparison to the BoW approach, only sentences attributed to Zuma and Mbeki exhibited improved performance. Other presidents experienced an increase in class errors. For instance, DeKlerk's class error rose by 13%, while Ramaphosa's class error saw an 8% increase. This shows how the TF-IDF was not effective across all the presidential classes although it did record a lower overall classification rate of 50,6% compared to that of the BoW which was 51.1%. The figure below shows that the TF-IDF model had similar mean decrease Gini for the words of importance,with the addition of some stop words which were not remove in the case of this model such as 'the' and 'of'
+
 ```{r}
 # Variable importance plot 
-varImpPlot(classifier_RF2) 
+varImpPlot(classifier_RF2,main = "Variable Importance with TF-IDF" ) 
 #| fig-cap: "RF Variable Importance"
 #| label: fig-RF_VarImp_IDF
 ```
