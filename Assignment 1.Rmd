@@ -259,12 +259,21 @@ tfidf <- speeches_tf_idf %>%
 
 ```
 
-```{r}
-model <- keras_model_sequential()
+```{r NN_BOW}
+target1 <- as.integer(factor(train$president_13)) - 1
+target2<-as.integer(factor(test$president_13)) - 1
 
-model %>% 
-    layer_dense(units = 8, activation = 'relu', input_shape = c(12235)) %>% 
-    layer_dropout(rate = 0.5) %>%
+y_train <- to_categorical(target1)
+y_test_original <- target2
+y_test <- to_categorical(target2)
+
+x_train<-as.matrix(train[,-1])
+x_test<-as.matrix(test[,-1])
+
+model <- keras_model_sequential() 
+model%>%
+    layer_dense(units = 64, activation = 'relu', input_shape = c(11669))%>%
+  layer_dense(units= 32, activation='relu', kernel_regularizer = regularizer_l1(0.01))%>%
     layer_dense(units = 6, activation = 'softmax')
 
 model %>% compile(
@@ -273,6 +282,25 @@ model %>% compile(
   metrics = c('accuracy'),
 )
 
+
+history <- model %>% fit(
+  x_train, y_train, 
+  epochs = 20, batch_size = 5, validation_split = 0.2)
+#, 
+# validation_split = 0.2, shuffle = TRUE
+#)
+
+plot(history)
+
+model %>% evaluate(x_test, y_test)
+y_test_hat <- model %>% predict(x_test) %>% k_argmax() %>% as.numeric()
+nn_table<-table(y_test_original, y_test_hat)
+round(sum(diag(nn_table))/sum(nn_table), 3) 
+```
+
+
+
+```{r NN_TF-IDF}
 target1 <- as.integer(factor(train2$president_13)) - 1
 target2<-as.integer(factor(test2$president_13)) - 1
 
@@ -280,19 +308,36 @@ y_train <- to_categorical(target1)
 y_test_original <- target2
 y_test <- to_categorical(target2)
 
-history <- model %>% fit(
-  train2[,-1], y_train, 
-  epochs = 30, batch_size = 5, 
-  validation_split = 0.2, shuffle = TRUE
+x_train<-as.matrix(train2[,-1])
+x_test<-as.matrix(test2[,-1])
+
+model <- keras_model_sequential() 
+model%>%
+    layer_dense(units = 64, activation = 'relu', input_shape = c(12234))%>%
+  layer_dense(units= 32, activation='relu', kernel_regularizer = regularizer_l1(0.01))%>%
+    layer_dense(units = 6, activation = 'softmax')
+
+model %>% compile(
+  loss = 'categorical_crossentropy',
+  optimizer = optimizer_adam(learning_rate = 0.01),
+  metrics = c('accuracy'),
 )
+
+
+history <- model %>% fit(
+  x_train, y_train, 
+  epochs = 20, batch_size = 5, validation_split = 0.2)
+#, 
+# validation_split = 0.2, shuffle = TRUE
+#)
 
 plot(history)
 
-
+model %>% evaluate(x_test, y_test)
+y_test_hat <- model %>% predict(x_test) %>% k_argmax() %>% as.numeric()
+nn_table<-table(y_test_original, y_test_hat)
+round(sum(diag(nn_table))/sum(nn_table), 3) 
 ```
-
-
-
 
 
 

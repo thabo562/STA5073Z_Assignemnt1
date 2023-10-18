@@ -357,6 +357,14 @@ varImpPlot(classifier_RF2,main = "Variable Importance with TF-IDF" )
 
 #### Feed Forward Neural Network(FFNN)
 
+```{r NN_BOW}
+
+```
+
+```{r NN_TF-IDF}
+
+```
+
 ## Discussion
 
 ## Conclusion
