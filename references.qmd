@@ -19,3 +19,5 @@ editor: visual
 -   Shah, K., Patel, H., Sanghvi, D. and Shah, M., 2020. A comparative analysis of logistic regression, random forest and KNN models for the text classification. *Augmented Human Research*, *5*, pp.1-16.
 
 -   Rigatti, S.J., 2017. Random forest. *Journal of Insurance Medicine*, *47*(1), pp.31-39.
+
+-   Mokhesi, S.P., 2003. *Nation-building in South Africa: Mandela and Mbeki Compared* (Doctoral dissertation, Stellenbosch: Stellenbosch University).

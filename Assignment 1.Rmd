@@ -273,22 +273,19 @@ x_test<-as.matrix(test[,-1])
 model <- keras_model_sequential() 
 model%>%
     layer_dense(units = 64, activation = 'relu', input_shape = c(11669))%>%
-  layer_dense(units= 32, activation='relu', kernel_regularizer = regularizer_l1(0.01))%>%
+    layer_dense(units= 32, activation='relu', kernel_regularizer = regularizer_l1(0.01))%>%
     layer_dense(units = 6, activation = 'softmax')
 
 model %>% compile(
   loss = 'categorical_crossentropy',
-  optimizer = optimizer_adam(learning_rate = 0.01),
+  optimizer = optimizer_adam(learning_rate = 0.0005),
   metrics = c('accuracy'),
 )
 
 
-history <- model %>% fit(
-  x_train, y_train, 
-  epochs = 20, batch_size = 5, validation_split = 0.2)
-#, 
-# validation_split = 0.2, shuffle = TRUE
-#)
+#history <- model %>% fit(
+#  x_train, y_train, 
+ # epochs = 25, batch_size = 5, validation_split = 0.2)
 
 plot(history)
 
@@ -301,42 +298,39 @@ round(sum(diag(nn_table))/sum(nn_table), 3)
 
 
 ```{r NN_TF-IDF}
-target1 <- as.integer(factor(train2$president_13)) - 1
-target2<-as.integer(factor(test2$president_13)) - 1
+target3 <- as.integer(factor(train2$president_13)) - 1
+target4<-as.integer(factor(test2$president_13)) - 1
 
-y_train <- to_categorical(target1)
-y_test_original <- target2
-y_test <- to_categorical(target2)
+y_train2 <- to_categorical(target3)
+y_test_original2 <- target4
+y_test2 <- to_categorical(target4)
 
-x_train<-as.matrix(train2[,-1])
-x_test<-as.matrix(test2[,-1])
+x_train2<-as.matrix(train2[,-1])
+x_test2<-as.matrix(test2[,-1])
 
-model <- keras_model_sequential() 
-model%>%
+model2 <- keras_model_sequential() 
+model2%>%
     layer_dense(units = 64, activation = 'relu', input_shape = c(12234))%>%
   layer_dense(units= 32, activation='relu', kernel_regularizer = regularizer_l1(0.01))%>%
     layer_dense(units = 6, activation = 'softmax')
 
-model %>% compile(
+model2 %>% compile(
   loss = 'categorical_crossentropy',
-  optimizer = optimizer_adam(learning_rate = 0.01),
+  optimizer = optimizer_adam(learning_rate = 0.0005),
   metrics = c('accuracy'),
 )
 
 
-history <- model %>% fit(
-  x_train, y_train, 
-  epochs = 20, batch_size = 5, validation_split = 0.2)
-#, 
-# validation_split = 0.2, shuffle = TRUE
-#)
+#history2 <- model2 %>% fit(
+# x_train2, y_train2, 
+#  epochs = 25, batch_size = 5, validation_split = 0.2)
 
-plot(history)
+plot(history2)
 
-model %>% evaluate(x_test, y_test)
-y_test_hat <- model %>% predict(x_test) %>% k_argmax() %>% as.numeric()
-nn_table<-table(y_test_original, y_test_hat)
-round(sum(diag(nn_table))/sum(nn_table), 3) 
+model2 %>% evaluate(x_test2, y_test2)
+y_test_hat2 <- model2 %>% predict(x_test2) %>% k_argmax() %>% as.numeric()
+nn_table2<-table(y_test_original2, y_test_hat2)
+round(sum(diag(nn_table2))/sum(nn_table2), 3) 
 ```
 
 
