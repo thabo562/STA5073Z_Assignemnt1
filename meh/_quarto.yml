@@ -6,8 +6,10 @@ website:
   title: "A Quarto Website"
   navbar:
     left:
-      -  Assignement1.qmd
-      -  reference.qmd
+      - href: Assignement1.qmd
+        text: Home
+      - href: reference.qmd
+        text: References
 
 format:
   html:
