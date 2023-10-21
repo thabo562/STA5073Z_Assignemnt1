@@ -43,7 +43,6 @@ The aim of this paper is to identify different machine learning models that can 
 ```{r Reading in Data}
 
 set.seed(2022)
-load("F:/STA5073Z- DS4I/pre-processed assignment data.RData")
 load("~/STA5073Z_Assignemnt1/Assignement code workspace.RData")
 #sona<-sona[-c(2,20),]  remove Motlante and De Klerk in this version of data split
 sona<-sona%>% mutate(speech= str_replace(speech, "\\d{1,2} [A-Za-z]+ \\d{4}", "")) # Remove dates at the start of the speech
