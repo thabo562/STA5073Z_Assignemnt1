@@ -8,8 +8,6 @@ website:
     left:
       - href: Assignement1.qmd
         text: Home
-      - href: reference.qmd
-        text: References
 
 format:
   html:
